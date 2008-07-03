@@ -5,7 +5,6 @@ import re
 
 m = pysmug.login("smugrc.txt")
 
-NickName = "alanw"
 
 
 #u'stat' u'ok'
@@ -14,26 +13,28 @@ NickName = "alanw"
 #
 
 
+NickName = "alanw"
 target_cat = "Life 2001"
 re_match = "2001."
 
 
 
-if len(sys.argv) < 3:
-    print "%s dst:target_category src:re_match [preview]" % sys.argv[0]
+if len(sys.argv) < 4:
+    print "%s username dst:target_category src:re_match [preview]" % sys.argv[0]
     sys.exit(-1)
 
+NickName = sys.argv[1]
+target_cat = sys.argv[2]
+re_match = sys.argv[3]
 
-target_cat = sys.argv[1]
-re_match = sys.argv[2]
-
-if len(sys.argv) >= 3:
-    preview_mode = sys.argv[3] == "preview"
+if len(sys.argv) >= 4:
+    preview_mode = sys.argv[4] == "preview"
     if not preview_mode:
         print "expected: preview"
         sys.exit(-1)
 else: preview_mode = False
 
+print "nickname:", NickName
 print "target_category:", target_cat
 print "re_match:", re_match
 print "preview_mode:", preview_mode
