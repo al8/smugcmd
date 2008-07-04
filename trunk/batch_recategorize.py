@@ -13,7 +13,7 @@ m = pysmug.login("smugrc.txt")
 #
 
 
-NickName = "alanw"
+NickName = ""
 target_cat = "Life 2001"
 re_match = "2001."
 
