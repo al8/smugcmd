@@ -1,7 +1,7 @@
 import pysmug
 import sys
 import re
-
+import pickle
 
 m = pysmug.login("smugrc.txt")
 
@@ -15,8 +15,10 @@ m = pysmug.login("smugrc.txt")
 
 NickName = "alanw"
 #target_cat = "Life 2001"
-re_match = "2000"
-
+#re_match = "2000"
+#re_match = "Nature 2008"
+re_match = "(2000.*)|(2001.*)|(2002.*)|(2003.*)|(2004.*)|(2005.*)|(2006.*)|(2007.*)|(2008.*)"
+re_notmatch = ""
 
 if False:
     if len(sys.argv) < 4:
@@ -63,6 +65,37 @@ cnt_total_albums = 0
 cnt_match_albums = 0
 cnt_modified_albums = 0
 
+keywords_dict = dict()
+
+
+#    0: LargeURL=http://alanw.smugmug.com/photos/325499347_6kSJp-L.jpg
+#    1: X3LargeURL=http://alanw.smugmug.com/photos/325499347_6kSJp-X3.jpg
+#    2: OriginalURL=http://alanw.smugmug.com/photos/325499347_6kSJp-80d50f7e1d89449bbc2849f9b75cfcc7.jpg
+#    3: X2LargeURL=http://alanw.smugmug.com/photos/325499347_6kSJp-X2.jpg
+#    4: Width=3072
+#    5: Hidden=False
+#    6: Height=2048
+#    7: SmallURL=http://alanw.smugmug.com/photos/325499347_6kSJp-S.jpg
+#    8: id=325499347
+#    9: Format=JPG
+#   10: Key=6kSJp
+#   11: Date=2008-07-04 16:16:24
+#   12: ThumbURL=http://alanw.smugmug.com/photos/325499347_6kSJp-Th.jpg
+#   13: XLargeURL=http://alanw.smugmug.com/photos/325499347_6kSJp-XL.jpg
+#   14: MD5Sum=80d50f7e1d89449bbc2849f9b75cfcc7
+#   15: Caption=
+#   16: TinyURL=http://alanw.smugmug.com/photos/325499347_6kSJp-Ti.jpg
+#   17: Position=16
+#   18: LastUpdated=2008-07-04 16:17:13
+#   19: FileName=20080704_1025-50_LR.jpg
+#   20: MediumURL=http://alanw.smugmug.com/photos/325499347_6kSJp-M.jpg
+#   21: Keywords="nature"
+#   22: Serial=0
+#   23: Size=25783013
+#    0: LargeURL=http://alanw.smugmug.com/photos/325499297_8NWFF-L.jpg
+#    1: X3LargeURL=http://alanw.smugmug.com/photos/325499297_8NWFF-X3.jpg
+#    2: OriginalURL=http://alanw.smugmug.com/photos/325499297_8NWFF-79d64c5bc813121b4531a1871a88d315.jpg
+
 
 if albumsresp[u'stat'] == u'ok':
     print "total album count:", len(albumsresp[u'Albums'])
@@ -86,96 +119,52 @@ if albumsresp[u'stat'] == u'ok':
         
         reg = re.match(re_match, e['Title'])
         
-        if not (reg is None): #matched!
+        if reg is None: #note matched!
+            print "**UnmatchedAlbum:", e['Title']
+        else:
+        #if not (reg is None): #matched!
             cnt_match_albums += 1
-            albumresp = m.albums_getInfo(AlbumID=e["id"], AlbumKey=e["Key"])
-#            print "found. before changing:", albumresp['Album']['Title'],
+            print "Album:", e['Title']
+
+            
+            #albumresp = m.albums_getInfo(AlbumID=e["id"], AlbumKey=e["Key"])
 #
-#            #for i, (k, v) in enumerate(albumresp['Album'].iteritems()):
-#            #    print "%3d: %s=%s" % (i, k, v)
-#            
-#            print ": %s %s %s %s %s" % (
-#                'Larges' if albumresp['Album']['Larges'] else '',
-#                'XLarges' if albumresp['Album']['XLarges'] else '',
-#                'X2Larges' if albumresp['Album']['X2Larges'] else '',
-#                'X3Larges' if albumresp['Album']['X3Larges'] else '',
-#                'Originals' if albumresp['Album']['Originals'] else '',
-#            )
+#            for i, (k, v) in enumerate(albumresp['Album'].iteritems()):
+#                print "%3d: %s=%s" % (i, k, v)
+
+
             imgresp = m.images_get(AlbumID=e["id"], AlbumKey=e["Key"], Heavy=True)
             
             if imgresp["stat"] == "ok":
-                for i, (v) in enumerate(imgresp["Album"]["Images"]):
-                    print i
+                for idx, (v) in enumerate(imgresp["Album"]["Images"]):
+#                    print idx
                     #print "%3d: %s" % (i, v)
-                    for i, (k,v) in enumerate(v.iteritems()):
-                        print "  %3d: %s=%s" % (i, k, v)
+#                    for idx, (k,v) in enumerate(v.iteritems()):
+#                        print "  %3d: %s=%s" % (idx, k, v)
+#                    #next
+                    #keywords_dict
+                    keywords = v["Keywords"]
+                    keyword_list = filter(lambda x: len(x) > 0, map(lambda x: x.strip(), keywords.split(";")))
+                    if len(keyword_list) > 0:
+                        for key in keyword_list:
+                            occurrences = keywords_dict.get(key, list())
+                            d = dict()
+                            d['FileName'] = v["FileName"]
+                            d['albumTitle'] = e['Title']
+                            d['albumID'] = e["id"]
+                            d['albumKey'] = e["Key"]
+                            d['ImageID'] = v["id"]
+                            d['ImageKey'] = v["Key"]
+                            d['TinyURL'] = v["TinyURL"]
+                            occurrences.append( d )
+                            if len(occurrences) == 1: keywords_dict[key] = occurrences
+                    
+                #next
+            #if stat = ok
 
-            sys.exit(-1)
-
-#            if len(albumresp['Album']['Password']) != 0:
-#                print "************ skipping", albumresp['Album']['Title']
-#                continue
-            
-            if (not albumresp['Album']['Larges'] or not albumresp['Album']['XLarges'] or not albumresp['Album']['X2Larges'] or not albumresp['Album']['X3Larges'] or not albumresp['Album']['Originals']):
-                print "found. before changing:", albumresp['Album']['Title'],
-                
-#                for i, (k, v) in enumerate(albumresp['Album'].iteritems()):
-#                    print "%3d: %s=%s" % (i, k, v)
-                
-                print ": %s %s %s %s %s" % (
-                    'Larges' if albumresp['Album']['Larges'] else '',
-                    'XLarges' if albumresp['Album']['XLarges'] else '',
-                    'X2Larges' if albumresp['Album']['X2Larges'] else '',
-                    'X3Larges' if albumresp['Album']['X3Larges'] else '',
-                    'Originals' if albumresp['Album']['Originals'] else '',
-                )
-
-                cnt_modified_albums += 1
-                if False:
-                    print "  preview mode... changes would be made here"
-                elif True:
-                    #print resp
-                    #for i, (k, v) in enumerate(resp['Album'].iteritems()):
-                    #    if k == "Category": print "%3d: %s=%s" % (i, k, v)
-                    changedict = {
-                        'Larges' : True,
-                        'XLarges' : True,
-                        'X2Larges' : True,
-                        'X3Larges' : True,
-                        'Originals' : True,
-                    }
-                    print "  changing now:",
-                    resp = m.albums_changeSettings(albumID=e["id"], **changedict)
-                    #print resp
-                    print "status:%s" % resp["stat"]
-                    if False:
-                        for k,v in resp.iteritems():
-                            if type(v) is dict:
-                                print k
-                                for e2 in v.iteritems():
-                                    print " ", e2
-                            else:
-                                print k, v
-                    if resp["stat"] == "ok":
-                        print "  after changing:",
-                        resp = m.albums_getInfo(albumID=e["id"], albumKey=e["Key"])
-                        print ": %s %s %s %s %s" % (
-                            'Larges' if resp['Album']['Larges'] else '',
-                            'XLarges' if resp['Album']['XLarges'] else '',
-                            'X2Larges' if resp['Album']['X2Larges'] else '',
-                            'X3Larges' if resp['Album']['X3Larges'] else '',
-                            'Originals' if resp['Album']['Originals'] else '',
-                        )
-                        #for i, (k, v) in enumerate(resp['Album'].iteritems()):
-                        #    print "%3d: %s=%s" % (i, k, v)
-                    #sys.exit(0) #debug
-            else:
-                print "no changes required:",  albumresp['Album']['Title']
-#            continue #debug
-
-    
-             
+            #sys.exit(-1)
         #else: print "skip"
+    #next album
 
 else:
     print "Error:", albumsresp[u'stat']
@@ -184,5 +173,45 @@ print "--------"
 print "cnt_total_albums:", cnt_total_albums
 print "cnt_match_albums:", cnt_match_albums
 print "cnt_modified_albums", cnt_modified_albums
+
+f = open("output.txt", "w")
+pickle.dump(keywords_dict, f)
+f.close()
+
+#f = open("output.txt")
+#newdict = pickle.load(f)
+#f.close()
+
+#for kw, occurrences in keywords_dict.iteritems():
+#    print "----\n%s:%d" % (kw, len(occurrences))
+#    for occurrence in occurrences:
+#        o = occurrence
+#        print "  %s | %s | %s" % (o["albumTitle"], o["FileName"], o["TinyURL"])
+
+
+
+
+
+
+
+
+#import pysmug
+#import sys
+#import re
+#import pickle
+#
+#
+#f = open("output.txt")
+#keywords_dict = pickle.load(f)
+#f.close()
+#
+#for kw, occurrences in keywords_dict.iteritems():
+#    print "----\n%s:%d" % (kw, len(occurrences))
+#    for occurrence in occurrences:
+#        o = occurrence
+#        print "  %s | %s | %s" % (o["albumTitle"], o["FileName"], o["TinyURL"])
+#
+
+
 
 
