@@ -110,6 +110,7 @@ for kw, occurrences in keywords_dict.iteritems():
 
         #print "  %s | %s | %s" % (o["albumTitle"], o["FileName"], o["TinyURL"])
 
+ch_count = 0
 print "changes:"
 for k, v in change_dict.iteritems():
     keywords_list = filter(lambda e: not e in v["remove"], v["old_keyword_list"])
@@ -125,11 +126,12 @@ for k, v in change_dict.iteritems():
     if len(v["remove"]) > 0: print "  %s=%s" % ("remove", v["remove"])
     if len(v["add"]) > 0: print "  %s=%s" % ("add", v["add"])
     
+    ch_count += 1
     if not preview_mode:
         imgchresp = m.images_changeSettings(ImageID=k, Keywords=v["Keywords"])
         if imgchresp["stat"] == "ok":        
             #print imgchresp
-            print "    success"
+            print "    success", ch_count
             pass
         else:
             print "    error on  ImageID=%s" % (k), imgchresp["stat"]
@@ -138,6 +140,7 @@ for k, v in change_dict.iteritems():
     
 #    for k2, v2 in v.iteritems():
 #        print "  %s=%s" % (k2, v2)
+print "total images modified:", ch_count
 sys.exit(-1)
 
 
