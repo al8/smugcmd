@@ -4,11 +4,17 @@ import re
 import pickle
 import string
 
+m = pysmug.login("smugrc.txt")
+
+
 #f = open("keyword_dict.txt")
 f = open(sys.argv[1])
 keywords_dict = pickle.load(f)
 f.close()
 
+
+NickName = "alanw"
+preview_mode = False
 
 #use only lower case here
 accepted_keywords = [
@@ -32,6 +38,9 @@ rename_keywords = {
 print "accepted keywords:", accepted_keywords
 print "rename keywords:", rename_keywords
 #isdigit
+
+print "nickname:", NickName
+print "preview_mode:", preview_mode
 
 
 #for kw, occurrences in keywords_dict.iteritems():
@@ -115,6 +124,18 @@ for k, v in change_dict.iteritems():
     print "  %s=%s" % ("Keywords", v["Keywords"])
     if len(v["remove"]) > 0: print "  %s=%s" % ("remove", v["remove"])
     if len(v["add"]) > 0: print "  %s=%s" % ("add", v["add"])
+    
+    if not preview_mode:
+        imgchresp = m.images_changeSettings(ImageID=k, Keywords=v["Keywords"])
+        if imgchresp["stat"] == "ok":        
+            #print imgchresp
+            print "    success"
+            pass
+        else:
+            print "    error on  ImageID=%s" % (k), imgchresp["stat"]
+    #sys.exit(-1)
+        
+    
 #    for k2, v2 in v.iteritems():
 #        print "  %s=%s" % (k2, v2)
 sys.exit(-1)
@@ -123,7 +144,7 @@ sys.exit(-1)
 imglist.sort()
 imglist.reverse()
 
-#image_changeSettings
+#images_changeSettings
 
 matched = 0
 for i, e in enumerate(imglist):
