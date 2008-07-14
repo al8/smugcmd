@@ -2,6 +2,7 @@ import pysmug
 import sys
 import re
 import pickle
+import time
 
 m = pysmug.login("smugrc.txt")
 
@@ -120,11 +121,13 @@ if albumsresp[u'stat'] == u'ok':
         reg = re.match(re_match, e['Title'])
         
         if reg is None: #note matched!
-            print "**UnmatchedAlbum:", e['Title']
+            print "**UnmatchedAlbum.Title:", e['Title']
         else:
         #if not (reg is None): #matched!
             cnt_match_albums += 1
-            print "Album:", e['Title']
+            print "Album.Title:", e['Title'] #, "  ImageCount:", e["ImageCount"]
+            #albuminforesp = m.albums_getInfo(albumId=album["id"], albumKey=album["Key"])
+            
 
             
             #albumresp = m.albums_getInfo(AlbumID=e["id"], AlbumKey=e["Key"])
@@ -132,8 +135,9 @@ if albumsresp[u'stat'] == u'ok':
 #            for i, (k, v) in enumerate(albumresp['Album'].iteritems()):
 #                print "%3d: %s=%s" % (i, k, v)
 
-
+            print "   getting images..."
             imgresp = m.images_get(AlbumID=e["id"], AlbumKey=e["Key"], Heavy=True)
+            print "   finished"
             
             if imgresp["stat"] == "ok":
                 for idx, (v) in enumerate(imgresp["Album"]["Images"]):
@@ -144,7 +148,16 @@ if albumsresp[u'stat'] == u'ok':
 #                    #next
                     #keywords_dict
                     keywords = v["Keywords"]
-                    keyword_list = filter(lambda x: len(x) > 0, map(lambda x: x.strip(), keywords.split(";")))
+
+                    if len(keywords) > 0:
+                        if keywords[0] == "\"": #detect if semicolon separated or quote separated
+                            keywords = keywords.strip("\"")
+                            keyword_list = filter(lambda x: len(x) > 0, map(lambda x: x.strip(), keywords.split("\" \"")))
+                        else:
+                            keyword_list = filter(lambda x: len(x) > 0, map(lambda x: x.strip(), keywords.split(";")))
+                    else:
+                        keyword_list = list()
+
                     if len(keyword_list) > 0:
                         for key in keyword_list:
                             occurrences = keywords_dict.get(key, list())
@@ -156,6 +169,8 @@ if albumsresp[u'stat'] == u'ok':
                             d['ImageID'] = v["id"]
                             d['ImageKey'] = v["Key"]
                             d['TinyURL'] = v["TinyURL"]
+                            d['Keywords'] = v["Keywords"]
+                            d['keyword_list'] = keyword_list
                             occurrences.append( d )
                             if len(occurrences) == 1: keywords_dict[key] = occurrences
                     
@@ -174,7 +189,7 @@ print "cnt_total_albums:", cnt_total_albums
 print "cnt_match_albums:", cnt_match_albums
 print "cnt_modified_albums", cnt_modified_albums
 
-f = open("output.txt", "w")
+f = open("output_%s.txt" % (time.time()), "w")
 pickle.dump(keywords_dict, f)
 f.close()
 
