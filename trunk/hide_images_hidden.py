@@ -141,11 +141,13 @@ if albumsresp[u'stat'] == u'ok':
                     #next
                     keywords = v["Keywords"]
                     if len(keywords) > 0:
-                        if keywords[0] == "\"": #detect if semicolon separated or quote separated
+                        if keywords[0] == "\"": #detect if semicolon separated or quote separated or plain
                             keywords = keywords.strip("\"")
                             keyword_list = filter(lambda x: len(x) > 0, map(lambda x: x.strip(), keywords.split("\" \"")))
-                        else:
+                        elif keywords.find(";") >= 0:
                             keyword_list = filter(lambda x: len(x) > 0, map(lambda x: x.strip(), keywords.split(";")))
+                        else:
+                            keyword_list = filter(lambda x: len(x) > 0, map(lambda x: x.strip(), keywords.split(" ")))
                     else:
                         keyword_list = list()
                         
